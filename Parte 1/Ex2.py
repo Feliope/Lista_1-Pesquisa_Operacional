@@ -1,38 +1,40 @@
-from mip import Model, xsum, MAXIMIZE
+from mip import Model, xsum,  maximize
 
 # Parâmetros
 custo_petroleo = [19, 24, 20, 27]  # Custo por barril de cada tipo de petróleo
 max_disponibilidade = [3500, 2200, 4200, 1800]  # Máxima disponibilidade de cada petróleo
 preco_gasolina = [35, 28, 22]  # Preço de venda por barril das gasolinas superazul, azul e amarela
 
-# Inicializar o modelo
-model = Model(sense=MAXIMIZE)
+model = Model()
 
-# Variáveis de decisão: quantidade de cada petróleo para cada tipo de gasolina
-x = [[model.add_var(name=f'x_{i}_{j}') for j in range(3)] for i in range(4)]
+x = [[model.add_var(name=f"x_{i}_{j}", lb=0) for j in range(3)] for i in range(4)]
 
-# Função objetivo: maximizar lucro
-model.objective = xsum(preco_gasolina[j] * xsum(x[i][j] for i in range(4)) -
-                       custo_petroleo[i] * x[i][j] for i in range(4) for j in range(3))
+receita = xsum(x[i][j] * preco_gasolina[j] for i in range(4) for j in range(3))
+custo = xsum(x[i][j] * custo_petroleo[i] for i in range(4) for j in range(3))
 
-# Restrições de disponibilidade de petróleo
+model.objective = maximize(receita - custo)
+
 for i in range(4):
-    model += xsum(x[i][j] for j in range(3)) <= max_disponibilidade[i], f"Disponibilidade_Petroleo_{i+1}"
+    model += xsum(x[i][j] for j in range(3)) <= max_disponibilidade[i]
 
-# Restrições de composição para cada gasolina
-# Superazul
-model += x[0][0] <= 0.3 * xsum(x[i][0] for i in range(4)), "Restricao_Superazul_Petroleo1"
-model += x[1][0] >= 0.4 * xsum(x[i][0] for i in range(4)), "Restricao_Superazul_Petroleo2"
-model += x[2][0] <= 0.5 * xsum(x[i][0] for i in range(4)), "Restricao_Superazul_Petroleo3"
+# Super Azul
+total_super_azul = xsum(x[i][0] for i in range(4))
+
+model += x[0][0] <= 0.3 * total_super_azul
+model += x[1][0] >= 0.4 * total_super_azul
+model += x[2][0] <= 0.5 * total_super_azul
 
 # Azul
-model += x[0][1] <= 0.3 * xsum(x[i][1] for i in range(4)), "Restricao_Azul_Petroleo1"
-model += x[1][1] >= 0.1 * xsum(x[i][1] for i in range(4)), "Restricao_Azul_Petroleo2"
+total_azul = xsum(x[i][1] for i in range(4))
 
-# Amarela
-model += x[0][2] <= 0.7 * xsum(x[i][2] for i in range(4)), "Restricao_Amarela_Petroleo1"
+model += x[0][1] <= 0.3 * total_azul
+model += x[1][1] >= 0.1 * total_azul
 
-# Resolver o modelo
+# Amarelo
+total_amarelo = xsum(x[i][2] for i in range(4))
+
+model += x[0][2] <= 0.7 * xsum(x[i][2] for i in range(4))
+
 model.optimize()
 
 # Exibir resultados
