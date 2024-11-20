@@ -8,10 +8,14 @@ model = Model(sense=MINIMIZE)
 x = model.add_var(var_type=CONTINUOUS)  # Unidades de HiFi-1
 y = model.add_var(var_type=CONTINUOUS)  # Unidades de HiFi-2
 
+
+restricao1 = 480 - (480 * 0.1)
+restricao2 = 480 - (480 * 0.14)
+restricao3 = 480 - (480 * 0.12)
 # Definindo a função objetivo (minimizar o tempo ocioso total)
-model.objective = minimize((432 - (6 * x + 4 * y)) +
-                           (412.8 - (5 * x + 5 * y)) +
-                           (422.4 - (4 * x + 6 * y)))
+model.objective = minimize((restricao1 - (6 * x + 4 * y)) +
+                           (restricao2 - (5 * x + 5 * y)) +
+                           (restricao3 - (4 * x + 6 * y)))
 
 # Adicionando as restrições de tempo das estações
 model += 6 * x + 4 * y <= 432       # Restrição da estação 1
